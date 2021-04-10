@@ -1,0 +1,28 @@
+version: '3.3'
+
+services:
+  pg_denormalized:
+    build: services/pg_denormalized
+    volumes:
+      - pg_denormalized:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=pass
+      - PGUSER=postgres
+    ports:
+      - 25432:5432
+
+  pg_normalized:
+    build: services/pg_normalized
+    volumes:
+      - pg_normalized:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=pass
+      - PGUSER=postgres
+    ports:
+      - 15432:5432
+
+volumes:
+    pg_normalized:
+    pg_denormalized:
