@@ -6,15 +6,43 @@ BEGIN;
 -- data tables
 --------------------------------------------------------------------------------    
 
-CREATE TABLE tweets (
+CREATE TABLE tweets_jsonb (
     data JSONB
 );
 
+--CREATE INDEX tweets_jsonb_idx ON tweets_jsonb USING GIN (data);
+--CREATE INDEX tweets_jsonb_idx2 ON tweets_jsonb USING GIN ((data) jsonb_path_ops);
+CREATE INDEX tweets_jsonb_idx3 ON tweets_jsonb USING GIN ((data->'entities'->'hashtags'));
+
 --------------------------------------------------------------------------------    
--- the materialized views below represent normalized tables
+-- the views below represent normalized tables
 --------------------------------------------------------------------------------    
 
-CREATE MATERIALIZED VIEW tweet_mentions AS (
+CREATE VIEW tweets AS (
+    SELECT 
+        data->>'id' AS id_tweets, 
+        data->'user'->>'id' AS id_users,
+        (data->>'created_at') :: TIMESTAMPTZ AS created_at,
+        data->>'in_reply_to_status_id' AS in_reply_to_status_id,
+        data->>'in_reply_to_user_id' AS in_reply_to_user_id,
+        data->>'quoted_status_id' AS quoted_status_id,
+        'FIXME' AS geo_coords, -- these "FIXME" columns involve complex python processing; they could be implemented in pure SQL, but it'd be a pain
+        'FIXME' AS geo_string,
+        data->>'retweet_count' AS retweet_count,
+        data->>'quote_count' AS quote_count,
+        data->>'favorite_count' AS favorite_count,
+        data->>'withheld_copyright' AS withheld_copyright,
+        data->'withheld_in_countries' AS withheld_in_countries,
+        data->'place'->>'full_name' AS place_name,
+        lower(data->'place'->>'country_code') AS country_code,
+        'FIXME' AS state_code,
+        data->>'lang' AS lang,
+        COALESCE(data->'extended_tweet'->>'full_text',data->>'text') AS text,
+        data->>'source' AS source
+    FROM tweets_jsonb
+);
+
+CREATE VIEW tweet_mentions AS (
     SELECT DISTINCT id_tweets, jsonb->>'id' AS id_users
     FROM (
         SELECT
@@ -23,37 +51,37 @@ CREATE MATERIALIZED VIEW tweet_mentions AS (
                 COALESCE(data->'entities'->'user_mentions','[]') ||
                 COALESCE(data->'extended_tweet'->'entities'->'user_mentions','[]')
             ) AS jsonb
-        FROM tweets
+        FROM tweets_jsonb
     ) t
 );
 
 
-CREATE MATERIALIZED VIEW tweet_tags AS (
-    SELECT DISTINCT id_tweets, '$' || (jsonb->>'text'::TEXT) AS tag
+CREATE VIEW tweet_tags AS (
+    SELECT id_tweets, '$' || (jsonb->>'text'::TEXT) AS tag
     FROM (
-        SELECT
+        SELECT DISTINCT
             data->>'id' AS id_tweets,
             jsonb_array_elements(
                 COALESCE(data->'entities'->'symbols','[]') ||
                 COALESCE(data->'extended_tweet'->'entities'->'symbols','[]')
             ) AS jsonb
-        FROM tweets
+        FROM tweets_jsonb
     ) t
     UNION ALL
-    SELECT DISTINCT id_tweets, '#' || (jsonb->>'text'::TEXT) AS tag
+    SELECT id_tweets, '#' || (jsonb->>'text'::TEXT) AS tag
     FROM (
-        SELECT
+        SELECT DISTINCT
             data->>'id' AS id_tweets,
             jsonb_array_elements(
                 COALESCE(data->'entities'->'hashtags','[]') ||
                 COALESCE(data->'extended_tweet'->'entities'->'hashtags','[]')
             ) AS jsonb
-        FROM tweets
+        FROM tweets_jsonb
     ) t
 );
 
 
-CREATE MATERIALIZED VIEW tweet_media AS (
+CREATE VIEW tweet_media AS (
     SELECT DISTINCT
         id_tweets,
         jsonb->>'media_url' AS media_url,
@@ -65,7 +93,7 @@ CREATE MATERIALIZED VIEW tweet_media AS (
                 COALESCE(data->'extended_entities'->'media','[]') ||
                 COALESCE(data->'extended_tweet'->'extended_entities'->'media','[]')
             ) AS jsonb
-        FROM tweets
+        FROM tweets_jsonb
     ) t
 );
 
@@ -74,7 +102,7 @@ CREATE MATERIALIZED VIEW tweet_media AS (
 /*
  * Precomputes the total number of occurrences for each hashtag
  */
-CREATE MATERIALIZED VIEW tweet_tags_total AS (
+CREATE VIEW tweet_tags_total AS (
     SELECT 
         row_number() over (order by count(*) desc) AS row,
         tag, 
@@ -87,7 +115,7 @@ CREATE MATERIALIZED VIEW tweet_tags_total AS (
 /*
  * Precomputes the number of hashtags that co-occur with each other
  */
-CREATE MATERIALIZED VIEW tweet_tags_cooccurrence AS (
+CREATE VIEW tweet_tags_cooccurrence AS (
     SELECT 
         t1.tag AS tag1,
         t2.tag AS tag2,
@@ -100,12 +128,3 @@ CREATE MATERIALIZED VIEW tweet_tags_cooccurrence AS (
 
 
 COMMIT;
-/*
-time unzip -p /data-fast/twitter2020/geoTwitter20-04-01.zip | sed 's/\\u0000//g' | psql postgres://postgres:pass@localhost:25432/ -c "COPY tweets (data) FROM STDIN csv quote e'\x01' delimiter e'\x02';"
-COPY 4102603
-
-real	14m12.189s
-user	3m40.130s
-sys	0m44.539s
-*/
-
