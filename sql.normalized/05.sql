@@ -5,7 +5,9 @@ SELECT
     tag,
     count(*) AS count
 FROM (
-    SELECT tag
+    SELECT DISTINCT
+        id_tweets,
+        tag
     FROM tweets
     JOIN tweet_tags USING (id_tweets)
     WHERE to_tsvector('english',text)@@to_tsquery('english','coronavirus')
@@ -13,6 +15,7 @@ FROM (
 ) t
 GROUP BY tag
 ORDER BY count DESC,tag
+LIMIT 1000
 ;
 
 

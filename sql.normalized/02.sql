@@ -2,11 +2,17 @@
  * Calculates the hashtags that are commonly used with the hashtag #coronavirus
  */
 SELECT
-    t2.tag as tag,
+    tag,
     count(*) as count
-FROM tweet_tags t1
-JOIN tweet_tags t2 ON t1.id_tweets = t2.id_tweets
-WHERE t1.tag='#coronavirus'
-  AND t2.tag LIKE '#%'
+FROM (
+    SELECT DISTINCT
+        id_tweets,
+        t2.tag
+    FROM tweet_tags t1
+    JOIN tweet_tags t2 USING (id_tweets)
+    WHERE t1.tag='#coronavirus'
+      AND t2.tag LIKE '#%'
+) t
 GROUP BY (1)
-ORDER BY count DESC,tag;
+ORDER BY count DESC,tag
+LIMIT 1000;

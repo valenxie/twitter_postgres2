@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ -e "$1" ]; then
+if [ -z "$1" ]; then
     echo "ERROR: no arguments given to $0"
     exit 1
 fi

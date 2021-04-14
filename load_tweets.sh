@@ -1,9 +1,4 @@
-#dir='.'
 dir='/data-fast/twitter 2020'
-#files='
-#bigger-data.zip
-#'
-#test-data.zip
 files='
 geoTwitter20-04-01.zip
 '

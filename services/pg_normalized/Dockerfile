@@ -5,8 +5,6 @@ RUN apt-get update && apt-get install -y \
     make \
     vim
 
-RUN mkdir /tmp/db
-COPY . /tmp/db
 WORKDIR /tmp/db
 
 RUN mkdir /data && chown postgres /data
