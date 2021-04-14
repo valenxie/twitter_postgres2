@@ -110,6 +110,13 @@ To submit your assignment:
    1. `2>&1` redirects stderr (2) to stdout (1), and since stdout is being redirected to a file, stderr will also be redirected to that file.
       The output of the `time` command goes to stderr, and so this combined with the subshell ensure that the time command's output gets sent into the results files.
 
+   You should run the commands
+   ```
+   $ cat results.normalized
+   $ cat results.denormalized
+   ```
+   to view the contents of these files and ensure they are correct.
+
 1. Add the `results.*`, `sql.denormalized`, and `services/*/schema-indexes.sql` files to your git repo, commit, and push to github.
 
 1. Submit a link to your forked repo to sakai.
