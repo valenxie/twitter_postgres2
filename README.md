@@ -83,6 +83,9 @@ My solution takes about 4 minutes without indexes, and 3 seconds with indexes.
 The indexed solution is still slower than the normalized solution because there are sorts in the query plan that the indexes cannot eliminate.
 In fact, no set of indexes would be able to eliminate these sorts... we'll talk later about how to eliminate them using materialized views.
 
+**HINT:**
+My solution uses 3 gin indexes, and no btree indexes.
+
 ## Submission
 
 We will not use github actions in this assignment,
