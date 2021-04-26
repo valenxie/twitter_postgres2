@@ -1,0 +1,9 @@
+sql.normalized/01.sql pass
+sql.normalized/02.sql pass
+sql.normalized/03.sql pass
+sql.normalized/04.sql pass
+sql.normalized/05.sql pass
+
+real	0m1.802s
+user	0m0.586s
+sys	0m0.371s
